@@ -1,110 +1,64 @@
-# Weather Database
+# Weather Events Database
 
-A comprehensive SQL database for tracking and managing weather-related events including hurricanes, earthquakes, tsunamis, droughts, and their impacts.
+[![MySQL](https://img.shields.io/badge/MySQL-8.0-4479A1?style=flat&logo=mysql&logoColor=white)](https://mysql.com)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow?style=flat)](LICENSE)
 
-## Database Overview
+A normalized relational database modeling major weather and natural disaster events — hurricanes, earthquakes, droughts, floods, and tsunamis — with human impact and economic damage data.
 
-This database contains 6 related tables to store weather event data:
+## Schema
 
-### Tables
-
-1. **Location** - Stores location information for weather events
-   - `event_id` - Event identifier
-   - `location_id` - Primary key
-   - `location_name` - Name of the location
-   - `event_type` - Type of weather event
-   - `date` - Year of the event
-   - `duration` - Duration of the event
-
-2. **Hurricane** - Stores hurricane-specific data
-   - `event_id` - Primary key
-   - `location_id` - Foreign key to Location
-   - `hurricane_name` - Name of the hurricane
-   - `wind_speed` - Wind speed in mph
-   - `temperature` - Temperature reading
-
-3. **Earthquake** - Stores earthquake data
-   - `event_id` - Primary key
-   - `location_id` - Foreign key to Location
-   - `duration` - Duration of the earthquake
-   - `magnitude` - Magnitude on Richter scale
-
-4. **Impact** - Stores impact data of weather events
-   - `event_id` - Primary key
-   - `location_id` - Foreign key to Location
-   - `location_name` - Name of affected location
-   - `event_type` - Type of event
-   - `date` - Year of event
-   - `death` - Number of deaths
-
-5. **Droughts** - Stores drought data
-   - `event_id` - Primary key
-   - `location_id` - Foreign key to Location
-   - `temperature` - Temperature reading
-
-6. **Tsunami** - Stores tsunami data
-   - `event_id` - Primary key
-   - `location_id` - Foreign key to Location
-   - `wave_speed` - Speed of waves
-   - `temperature` - Water temperature
-
-## Getting Started
-
-### Prerequisites
-
-- MySQL Server
-- MySQL Workbench (optional, for GUI)
-
-### Installation
-
-1. Create the database:
-```sql
-CREATE DATABASE weatherr;
-USE weatherr;
+```
+location (location_id PK, event_id, location_name, event_type, event_year, duration_days)
+    |
+    |── hurricane  (event_id PK, location_id FK, name, wind_speed_mph, category)
+    |── earthquake (event_id PK, location_id FK, magnitude, depth_km)
+    |── drought    (event_id PK, location_id FK, temperature_f, palmer_index)
+    |── tsunami    (event_id PK, location_id FK, wave_speed_mph, max_height_m)
+    |── impact     (event_id PK, location_id FK, deaths, injuries, damage_usd)
 ```
 
-2. Run the SQL script:
-```sql
-SOURCE weather_database.sql;
+## Project Structure
+
+```
+├── schema/
+│   ├── 01_create_tables.sql    # Table definitions with constraints
+│   └── 02_seed_data.sql        # 5 major historical events
+├── queries/
+│   ├── 01_basic_queries.sql    # Retrieval and filtering
+│   ├── 02_advanced_queries.sql # Aggregations and joins
+│   └── 03_analytical_queries.sql # Views, severity index, reporting
+└── .gitignore
 ```
 
-Or copy and execute the SQL commands in your MySQL client.
+## Quick Start
 
-### CSV Data Files
+```bash
+# Load schema and seed data
+mysql -u root -p < schema/01_create_tables.sql
+mysql -u root -p < schema/02_seed_data.sql
 
-The following CSV files are required for data insertion:
-- `location.csv` - Location data
-- `hurricane.csv` - Hurricane data
-- `earthquake.csv` - Earthquake data
-- `impact.csv` - Impact data
-- `droughts.csv` - Drought data
-- `tsunami.csv` - Tsunami data
-
-Place these files in the appropriate directory and update the `LOAD DATA INFILE` paths as needed.
-
-## Query Examples
-
-```sql
--- View all locations
-SELECT * FROM location;
-
--- View all hurricanes
-SELECT * FROM hurricane;
-
--- View all earthquakes
-SELECT * FROM earthquake;
-
--- View all impacts
-SELECT * FROM impact;
-
--- View all droughts
-SELECT * FROM droughts;
-
--- View all tsunamis
-SELECT * FROM tsunami;
+# Run queries
+mysql -u root -p weather_events < queries/01_basic_queries.sql
 ```
 
-## License
+## Sample Query
 
-This project is for educational purposes.
+```sql
+-- Top 5 deadliest events with economic damage
+SELECT location_name, event_type, event_year, deaths, damage_usd
+FROM impact
+ORDER BY deaths DESC
+LIMIT 5;
+```
 
+## Seed Data Includes
+
+| Event | Year | Deaths | Damage |
+|-------|------|--------|--------|
+| Hurricane Katrina | 2005 | 1,833 | $125B |
+| Indian Ocean Tsunami | 2004 | 227,898 | $10B |
+| Bangladesh Flooding | 2017 | 156 | $3B |
+
+## Author
+
+**Harshita Guduru** — [GitHub](https://github.com/guduruharshita) · [LinkedIn](https://linkedin.com/in/harshita-guduru)
