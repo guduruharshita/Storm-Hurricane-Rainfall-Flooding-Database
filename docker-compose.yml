@@ -1,0 +1,30 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: storm_events
+      POSTGRES_USER: storm
+      POSTGRES_PASSWORD: storm_dev_pw
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./schema:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U storm -d storm_events"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      STORM_DATABASE_URL: postgresql://storm:storm_dev_pw@db:5432/storm_events
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  pgdata:

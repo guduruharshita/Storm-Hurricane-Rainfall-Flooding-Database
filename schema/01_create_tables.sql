@@ -1,70 +1,92 @@
 -- ============================================================
--- Weather Events Database Schema
--- Database: weather_events
+-- Natural Disaster Events Database — PostgreSQL DDL
+-- Matches the SQLModel ORM in src/storm_db/models/models.py
 -- ============================================================
 
-CREATE DATABASE IF NOT EXISTS weather_events;
-USE weather_events;
+CREATE TYPE event_type AS ENUM ('hurricane', 'earthquake', 'drought', 'tsunami', 'flood');
 
--- Location: geographic context for all weather events
-CREATE TABLE location (
-    location_id   INT          PRIMARY KEY AUTO_INCREMENT,
-    event_id      INT          NOT NULL,
-    location_name VARCHAR(100) NOT NULL,
-    event_type    VARCHAR(50)  NOT NULL,
-    event_year    YEAR         NOT NULL,
-    duration_days INT          NOT NULL
+-- Geographic context shared across all event types
+CREATE TABLE locations (
+    id        SERIAL       PRIMARY KEY,
+    name      VARCHAR(100) NOT NULL,
+    country   VARCHAR(100) NOT NULL,
+    region    VARCHAR(100),
+    latitude  DOUBLE PRECISION,
+    longitude DOUBLE PRECISION
 );
 
--- Hurricane events with meteorological data
-CREATE TABLE hurricane (
-    event_id       INT          PRIMARY KEY,
-    location_id    INT          NOT NULL,
-    hurricane_name VARCHAR(100) NOT NULL,
-    wind_speed_mph INT          NOT NULL,
-    temperature_f  INT,
-    category       TINYINT      CHECK (category BETWEEN 1 AND 5),
-    FOREIGN KEY (location_id) REFERENCES location(location_id)
+CREATE INDEX idx_locations_country ON locations (country);
+CREATE INDEX idx_locations_name    ON locations (name);
+
+-- Master event record — one row per discrete event
+CREATE TABLE disaster_events (
+    id            SERIAL      PRIMARY KEY,
+    location_id   INT         NOT NULL REFERENCES locations(id),
+    event_type    event_type  NOT NULL,
+    year          SMALLINT    NOT NULL CHECK (year BETWEEN 1800 AND 2100),
+    duration_days SMALLINT    CHECK (duration_days >= 1),
+    name          VARCHAR(100)
 );
 
--- Earthquake events with seismic data
-CREATE TABLE earthquake (
-    event_id    INT           PRIMARY KEY,
-    location_id INT           NOT NULL,
-    duration    VARCHAR(50),
-    magnitude   DECIMAL(4,2)  NOT NULL CHECK (magnitude >= 0),
-    depth_km    FLOAT,
-    FOREIGN KEY (location_id) REFERENCES location(location_id)
+CREATE INDEX idx_events_type     ON disaster_events (event_type);
+CREATE INDEX idx_events_year     ON disaster_events (year);
+CREATE INDEX idx_events_location ON disaster_events (location_id);
+
+-- Human and economic impact (optional — not all records have data)
+CREATE TABLE impacts (
+    id         SERIAL PRIMARY KEY,
+    event_id   INT    NOT NULL UNIQUE REFERENCES disaster_events(id),
+    deaths     INT    NOT NULL DEFAULT 0 CHECK (deaths >= 0),
+    injuries   INT    NOT NULL DEFAULT 0 CHECK (injuries >= 0),
+    damage_usd BIGINT CHECK (damage_usd >= 0)
 );
 
--- Flooding and storm impact data
-CREATE TABLE impact (
-    event_id      INT          PRIMARY KEY,
-    location_id   INT          NOT NULL,
-    location_name VARCHAR(100),
-    event_type    VARCHAR(50),
-    event_year    YEAR,
-    deaths        INT          DEFAULT 0 CHECK (deaths >= 0),
-    injuries      INT          DEFAULT 0,
-    damage_usd    BIGINT,
-    FOREIGN KEY (location_id) REFERENCES location(location_id)
+-- Hurricane meteorological detail
+CREATE TABLE hurricane_details (
+    id            SERIAL   PRIMARY KEY,
+    event_id      INT      NOT NULL UNIQUE REFERENCES disaster_events(id),
+    category      SMALLINT NOT NULL CHECK (category BETWEEN 1 AND 5),
+    wind_speed_mph INT     NOT NULL CHECK (wind_speed_mph >= 0),
+    pressure_mb   INT
 );
 
--- Drought events
-CREATE TABLE drought (
-    event_id      INT  PRIMARY KEY,
-    location_id   INT  NOT NULL,
-    temperature_f INT,
-    palmer_index  FLOAT,
-    FOREIGN KEY (location_id) REFERENCES location(location_id)
+-- Earthquake seismic detail
+CREATE TABLE earthquake_details (
+    id        SERIAL          PRIMARY KEY,
+    event_id  INT             NOT NULL UNIQUE REFERENCES disaster_events(id),
+    magnitude NUMERIC(4, 2)   NOT NULL CHECK (magnitude >= 0),
+    depth_km  DOUBLE PRECISION
 );
 
--- Tsunami events
-CREATE TABLE tsunami (
-    event_id       INT  PRIMARY KEY,
-    location_id    INT  NOT NULL,
-    wave_speed_mph INT,
-    max_height_m   FLOAT,
-    temperature_f  INT,
-    FOREIGN KEY (location_id) REFERENCES location(location_id)
+-- Drought Palmer Drought Severity Index
+CREATE TABLE drought_details (
+    id            SERIAL PRIMARY KEY,
+    event_id      INT    NOT NULL UNIQUE REFERENCES disaster_events(id),
+    palmer_index  DOUBLE PRECISION,
+    temperature_f INT
 );
+
+-- Tsunami wave data
+CREATE TABLE tsunami_details (
+    id             SERIAL          PRIMARY KEY,
+    event_id       INT             NOT NULL UNIQUE REFERENCES disaster_events(id),
+    max_height_m   DOUBLE PRECISION,
+    wave_speed_mph INT
+);
+
+-- Convenience view for dashboard queries
+CREATE VIEW event_summary AS
+SELECT
+    de.id,
+    de.name,
+    de.event_type,
+    de.year,
+    l.name       AS location_name,
+    l.country,
+    l.region,
+    i.deaths,
+    i.injuries,
+    i.damage_usd
+FROM disaster_events de
+JOIN locations l ON l.id = de.location_id
+LEFT JOIN impacts i ON i.event_id = de.id;
