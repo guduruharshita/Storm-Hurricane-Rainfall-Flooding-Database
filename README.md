@@ -4,9 +4,16 @@
 [![Python](https://img.shields.io/badge/Python-3.11-3776AB?logo=python)](pyproject.toml)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688?logo=fastapi)](src/storm_db/api/main.py)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-336791?logo=postgresql)](schema/01_create_tables.sql)
+[![Tables](https://img.shields.io/badge/Schema-7%20Tables-orange?logo=postgresql)](schema/01_create_tables.sql)
+[![Endpoints](https://img.shields.io/badge/Endpoints-10-blue?logo=fastapi)](src/storm_db/api/routers/)
+[![Tests](https://img.shields.io/badge/Tests-20%20passing-success?logo=pytest)](tests/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 Production-ready REST API and relational database for tracking and analysing **natural disaster events** — hurricanes, earthquakes, droughts, tsunamis, and floods. Features a normalized PostgreSQL schema, a FastAPI service layer, and analytics endpoints that aggregate human and economic impact across event types.
+
+## Why This Database
+
+Historical natural disaster data is scattered across NOAA, EM-DAT, ReliefWeb, and Wikipedia — each with different schemas, units, and coverage gaps. Answering a question like "which hurricane category causes the most economic damage per event?" or "how has the annual earthquake death toll trended since 1990?" requires manually joining four different data sources. This database normalizes five hazard types into a single queryable schema with type-specific detail tables (hurricane wind speed and category, earthquake magnitude and depth, tsunami wave height) while keeping a shared `disaster_events` master table for cross-hazard analytics. The REST API exposes pre-built analytics endpoints so common aggregation queries do not require raw SQL knowledge.
 
 ## Architecture
 
@@ -177,6 +184,18 @@ tests/test_analytics.py::test_earthquake_magnitudes PASSED
 |----------|---------|-------------|
 | `STORM_DATABASE_URL` | `sqlite:///./storm_events.db` | Database connection string |
 | `STORM_DEBUG` | `false` | Enable SQLAlchemy query logging |
+
+---
+
+## Future Improvements
+
+- **Real-time NOAA ingestion** — Scheduled job polling the NOAA National Hurricane Center RSS feed to auto-insert new active storm events with zero manual data entry
+- **Interactive map** — `/api/geojson` endpoint returning GeoJSON FeatureCollections for Leaflet.js or Mapbox visualization of event locations and damage radius
+- **Climate trend forecasting** — Apply Prophet or ARIMA to the yearly-trend data to forecast event frequency and death tolls for the next decade
+- **Alert webhooks** — `POST /api/webhooks/register` so downstream dashboards and Slack bots receive a notification when a new catastrophic event is ingested
+- **GraphQL API** — Strawberry GraphQL layer alongside REST so clients can query exactly the fields they need across joined tables in a single request
+
+---
 
 ## Skills Demonstrated
 
