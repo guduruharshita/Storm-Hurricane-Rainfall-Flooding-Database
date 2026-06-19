@@ -7,7 +7,6 @@
 [![Tables](https://img.shields.io/badge/Schema-7%20Tables-orange?logo=postgresql)](schema/01_create_tables.sql)
 [![Endpoints](https://img.shields.io/badge/Endpoints-10-blue?logo=fastapi)](src/storm_db/api/routers/)
 [![Tests](https://img.shields.io/badge/Tests-20%20passing-success?logo=pytest)](tests/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 Production-ready REST API and relational database for tracking and analysing **natural disaster events** — hurricanes, earthquakes, droughts, tsunamis, and floods. Features a normalized PostgreSQL schema, a FastAPI service layer, and analytics endpoints that aggregate human and economic impact across event types.
 
