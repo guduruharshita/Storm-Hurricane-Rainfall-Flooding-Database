@@ -191,3 +191,7 @@ tests/test_analytics.py::test_earthquake_magnitudes PASSED
 | **Docker** | Multi-service compose with PostgreSQL 16, health-check gated startup, schema auto-init |
 | **Testing** | 20 pytest tests with SQLite in-memory DB, fixture-based isolation, conftest seed helpers |
 | **CI/CD** | GitHub Actions: ruff lint + pytest on push to main and feature branches |
+
+---
+
+**Harshita Guduru** — [GitHub](https://github.com/guduruharshita) · [LinkedIn](https://linkedin.com/in/guduruharshita) · [Email](mailto:guduruharshita2001@gmail.com)
